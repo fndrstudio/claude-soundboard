@@ -1,7 +1,7 @@
 {
   "name": "soundboard",
   "displayName": "Claude Soundboard",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Play a sound when Claude replies — with per-event probability, a sound library, and paste-a-YouTube-link import.",
   "author": {
     "name": "FNDR Studio",

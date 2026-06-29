@@ -62,6 +62,7 @@ Every subcommand below is typed after `/soundboard:sounds`:
 | `reply fahh`                   | Assign a library sound to a trigger     |
 | `reply random`                 | Pick a random library sound each time   |
 | `add <url> [name] [start-end]` | Import audio from YouTube               |
+| `fade <name> [seconds]`        | Smooth a sound's ending (default 0.3s)  |
 | `rename <old> <new>`           | Rename a custom sound                   |
 | `remove <name>`                | Delete a custom sound                   |
 | `list`                         | Show your sound library                 |
@@ -101,6 +102,8 @@ Each has its own on/off switch, its own probability, and its own sound. Want a s
 **Most YouTube sounds are too long** — just append a `start-end` range and only that snippet is downloaded (handy for long intros, and yt-dlp pulls the raw stream so there are no ads either way). Times accept `SS`, `M:SS`, or `H:MM:SS`, e.g. `0:03-0:08`, `90-95`, `1:02:00-1:02:04`. The range is detected automatically, so the `clip` keyword is optional.
 
 > If your link contains an `&` (e.g. a playlist URL), wrap it in quotes: `add "https://…&list=…" fahh`. The short `youtu.be/ID` form never needs quoting.
+
+**Imported sounds get a 0.3s fade-out automatically** so clipped audio doesn't cut off abruptly (plus a tiny fade-in to kill the opening click). Tune it inline — `add <url> fahh 0:03-0:08 fade 0.6` — or skip it with `nofade`. To smooth a sound you already have: `fade fahh` (or `fade fahh 0.5`).
 
 This feature shells out to [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) + `ffmpeg`. They're **only** needed for `add` — everything else works without them. If they're missing, the command tells you how to install them:
 

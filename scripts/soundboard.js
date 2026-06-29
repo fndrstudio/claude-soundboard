@@ -234,15 +234,58 @@ function list() {
   console.log(out);
 }
 
+// Smooths the end (and start) of a clip so it doesn't cut off abruptly.
+// Reverse → fade-in → reverse fades the tail without needing the duration.
+function applyFade(file, fadeSec) {
+  if (!fadeSec || fadeSec <= 0) return false;
+  if (!hasCmd("ffmpeg")) return false;
+  const tmp = file.replace(/\.mp3$/i, "") + ".faded.mp3";
+  const filter = `afade=t=in:d=0.02,areverse,afade=t=in:d=${fadeSec},areverse`;
+  const r = spawnSync(
+    "ffmpeg",
+    [
+      "-y",
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-i",
+      file,
+      "-af",
+      filter,
+      tmp,
+    ],
+    { encoding: "utf8" },
+  );
+  if (r.status === 0 && fs.existsSync(tmp)) {
+    try {
+      fs.renameSync(tmp, file);
+      return true;
+    } catch (_) {}
+  }
+  try {
+    fs.unlinkSync(tmp);
+  } catch (_) {}
+  return false;
+}
+
 function add(args) {
   let url = null,
     name = null,
-    clip = null;
+    clip = null,
+    fade = 0.3;
   const isRange = (s) => /^[\d:.]+-[\d:.]+$/.test(s);
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a === "clip" || a === "--clip") {
       clip = args[++i];
+      continue;
+    }
+    if (a === "fade" || a === "--fade") {
+      fade = parseFloat(args[++i]) || 0;
+      continue;
+    }
+    if (a === "nofade") {
+      fade = 0;
       continue;
     }
     if (isRange(a)) {
@@ -307,12 +350,31 @@ function add(args) {
     );
     return;
   }
+  const faded = applyFade(finalPath, fade);
   const cfg = loadConfig();
   cfg.library[name] = finalPath;
   saveConfig(cfg);
   console.log(
-    `✅ Added "${name}".\n   Assign it:  ${CMD} reply ${name}\n   Hear it:    ${CMD} test ${name}`,
+    `✅ Added "${name}"${faded ? ` with a ${fade}s fade-out` : ""}.\n   Assign it:  ${CMD} reply ${name}\n   Hear it:    ${CMD} test ${name}`,
   );
+}
+
+function fadeSound(name, secRaw) {
+  if (!name) {
+    console.log(`Usage: ${CMD} fade <name> [seconds]`);
+    return;
+  }
+  const cfg = loadConfig();
+  if (!cfg.library[name]) {
+    console.log(`No custom sound named "${name}".`);
+    return;
+  }
+  const sec = secRaw != null ? parseFloat(secRaw) : 0.3;
+  if (applyFade(cfg.library[name], sec)) {
+    console.log(`🎚️  Smoothed "${name}" with a ${sec}s fade-out.`);
+  } else {
+    console.log(`Couldn't fade "${name}" (needs ffmpeg, or seconds was 0).`);
+  }
 }
 
 function rename(oldName, newRaw) {
@@ -384,6 +446,8 @@ Usage:  ${CMD} <command>
        value:   on | off | <number>% | <sound-name>
        e.g.  reply 50     waiting on     reply fahh     reply random
   add <url> [name] [start-end]   import a sound from YouTube (e.g. add <url> fahh 0:03-0:08)
+       …add a fade with  fade <sec>  or turn it off with  nofade
+  fade <name> [seconds]          smooth an existing sound's ending (default 0.3s)
   rename <old> <new>             rename a custom sound
   remove <name>                  delete a custom sound
   list                           show the sound library
@@ -423,6 +487,8 @@ function main() {
       return test(argv[1]);
     case "add":
       return add(argv.slice(1));
+    case "fade":
+      return fadeSound(argv[1], argv[2]);
     case "rename":
     case "mv":
       return rename(argv[1], argv[2]);
