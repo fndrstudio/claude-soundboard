@@ -1,0 +1,14 @@
+{
+  "name": "claude-soundboard",
+  "displayName": "Claude Soundboard",
+  "version": "0.1.0",
+  "description": "Play a sound when Claude replies — with per-event probability, a sound library, and paste-a-YouTube-link import.",
+  "author": {
+    "name": "FNDR Studio",
+    "url": "https://github.com/fndrstudio"
+  },
+  "homepage": "https://github.com/fndrstudio/claude-soundboard",
+  "repository": "https://github.com/fndrstudio/claude-soundboard",
+  "license": "MIT",
+  "keywords": ["sound", "audio", "notifications", "hooks", "fun"]
+}

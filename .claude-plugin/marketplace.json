@@ -1,0 +1,15 @@
+{
+  "name": "claude-soundboard",
+  "owner": {
+    "name": "FNDR Studio",
+    "url": "https://github.com/fndrstudio"
+  },
+  "plugins": [
+    {
+      "name": "claude-soundboard",
+      "source": "./",
+      "description": "Play a sound when Claude replies — configurable probability, a sound library, and YouTube import.",
+      "version": "0.1.0"
+    }
+  ]
+}
