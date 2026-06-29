@@ -1,5 +1,6 @@
 {
   "name": "claude-soundboard",
+  "description": "Sound effects for Claude Code — play a sound when Claude replies, with configurable probability and YouTube import.",
   "owner": {
     "name": "FNDR Studio",
     "url": "https://github.com/fndrstudio"
