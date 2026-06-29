@@ -5,7 +5,7 @@
 // Runs on the Node that ships with Claude Code, so it has zero npm dependencies.
 // Invoked two ways:
 //   node soundboard.js play <trigger>     (from hooks — silent, never blocks)
-//   node soundboard.js <command> ...       (from the /sounds slash command)
+//   node soundboard.js <command> ...       (from the /soundboard:sounds slash command)
 
 const fs = require("fs");
 const os = require("os");
@@ -13,6 +13,10 @@ const path = require("path");
 const { spawn, spawnSync } = require("child_process");
 
 const TRIGGERS = ["reply", "waiting", "prompt", "session"];
+
+// The slash command users actually type. Plugin commands are namespaced as
+// /<plugin>:<command>, so this is the single source of truth for every hint below.
+const CMD = "/soundboard:sounds";
 
 const PLUGIN_ROOT =
   process.env.CLAUDE_PLUGIN_ROOT || path.resolve(__dirname, "..");
@@ -137,7 +141,7 @@ function hookPlay(trigger) {
   } catch (_) {}
 }
 
-// --- /sounds command path: human-readable output relayed by Claude ---
+// --- /soundboard:sounds command path: human-readable output relayed by Claude ---
 function printStatus() {
   const cfg = loadConfig();
   let out = `🔊 Claude Soundboard: ${cfg.enabled ? "ON" : "OFF (muted)"}\n\n`;
@@ -147,7 +151,7 @@ function printStatus() {
   }
   out += `\n   reply   = after Claude answers      prompt  = when you hit send`;
   out += `\n   waiting = when Claude needs you      session = at session start\n`;
-  out += `\nTry:  /sounds reply 25%   ·   /sounds add <youtube-url> airhorn   ·   /sounds test   ·   /sounds off`;
+  out += `\nControl with ${CMD} — e.g.  reply 25%  ·  add <url> fahh 0:03-0:08  ·  test  ·  off`;
   console.log(out);
 }
 
@@ -196,7 +200,7 @@ function configTrigger(name, rest) {
         fs.existsSync(expandHome(tok));
       if (!valid) {
         console.log(
-          `⚠️  No sound named "${tok}". Add one with: /sounds add <youtube-url> ${tok}`,
+          `⚠️  No sound named "${tok}". Add one with: ${CMD} add <youtube-url> ${tok}`,
         );
         return;
       }
@@ -223,7 +227,7 @@ function list() {
   let out = "🎵 Sound library:\n   default   (built-in chime)\n";
   out += names.length
     ? names.map((n) => `   ${n}`).join("\n") + "\n"
-    : "   (no custom sounds yet — add one with /sounds add <youtube-url> [name])\n";
+    : `   (no custom sounds yet — add one with ${CMD} add <youtube-url> [name])\n`;
   out += "\nAssigned to triggers:\n";
   for (const t of TRIGGERS)
     out += `   ${t.padEnd(8)} → ${cfg.triggers[t].sound}\n`;
@@ -256,7 +260,7 @@ function add(args) {
   }
   if (!url) {
     console.log(
-      "Usage: /sounds add <youtube-url> [name] [start-end]   e.g. add <url> airhorn 0:03-0:08",
+      `Usage: ${CMD} add <youtube-url> [name] [start-end]   e.g. add <url> fahh 0:03-0:08`,
     );
     return;
   }
@@ -307,13 +311,41 @@ function add(args) {
   cfg.library[name] = finalPath;
   saveConfig(cfg);
   console.log(
-    `✅ Added "${name}".\n   Assign it:  /sounds reply ${name}\n   Hear it:    /sounds test ${name}`,
+    `✅ Added "${name}".\n   Assign it:  ${CMD} reply ${name}\n   Hear it:    ${CMD} test ${name}`,
   );
+}
+
+function rename(oldName, newRaw) {
+  if (!oldName || !newRaw) {
+    console.log(`Usage: ${CMD} rename <old> <new>`);
+    return;
+  }
+  const newName = slug(newRaw);
+  const cfg = loadConfig();
+  if (!cfg.library[oldName]) {
+    console.log(`No custom sound named "${oldName}".`);
+    return;
+  }
+  if (cfg.library[newName]) {
+    console.log(`A sound named "${newName}" already exists.`);
+    return;
+  }
+  const oldPath = cfg.library[oldName];
+  const newPath = path.join(USER_SOUNDS, newName + path.extname(oldPath));
+  try {
+    fs.renameSync(oldPath, newPath);
+  } catch (_) {}
+  delete cfg.library[oldName];
+  cfg.library[newName] = newPath;
+  for (const t of TRIGGERS)
+    if (cfg.triggers[t].sound === oldName) cfg.triggers[t].sound = newName;
+  saveConfig(cfg);
+  console.log(`✏️  Renamed "${oldName}" → "${newName}".`);
 }
 
 function remove(name) {
   if (!name) {
-    console.log("Usage: /sounds remove <name>");
+    console.log(`Usage: ${CMD} remove <name>`);
     return;
   }
   const cfg = loadConfig();
@@ -340,22 +372,22 @@ function slug(s) {
 }
 
 function help() {
-  console.log(`Claude Soundboard — usage:
+  console.log(`${CMD} — control your Claude Soundboard.
 
-  /sounds                     show current status
-  /sounds on | off            master toggle (mute everything)
-  /sounds 25%                 set reply sound to 25% chance
-  /sounds <trigger> <value>   configure a trigger
+Usage:  ${CMD} <command>
+
+  (no args)                      show current status
+  on | off                       master toggle (mute everything)
+  25%                            set the reply sound to a 25% chance
+  <trigger> <value>              configure a trigger
        trigger: reply | waiting | prompt | session
        value:   on | off | <number>% | <sound-name>
-       e.g.  /sounds reply 50      /sounds waiting on
-             /sounds reply bonk    /sounds reply random
-
-  /sounds add <youtube-url> [name] [start-end]   import a sound from YouTube
-       e.g.  /sounds add https://youtu.be/ID airhorn 0:03-0:08  (grabs just 0:03–0:08)
-  /sounds list                show the sound library
-  /sounds remove <name>       delete a custom sound
-  /sounds test [trigger|name] play a sound right now`);
+       e.g.  reply 50     waiting on     reply fahh     reply random
+  add <url> [name] [start-end]   import a sound from YouTube (e.g. add <url> fahh 0:03-0:08)
+  rename <old> <new>             rename a custom sound
+  remove <name>                  delete a custom sound
+  list                           show the sound library
+  test [trigger|name]            play a sound right now`);
 }
 
 function main() {
@@ -391,6 +423,9 @@ function main() {
       return test(argv[1]);
     case "add":
       return add(argv.slice(1));
+    case "rename":
+    case "mv":
+      return rename(argv[1], argv[2]);
     case "remove":
     case "rm":
       return remove(argv[1]);

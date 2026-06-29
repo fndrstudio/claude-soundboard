@@ -10,7 +10,7 @@ You ──prompt──▶ Claude ──reply──▶ 🔔  (plays ~25% of the t
 
 - 🎲 **Probability per event** — `100%` for always, `20%` for occasional, `0%` for never.
 - 🎚️ **Four triggers** — a sound when Claude _answers_, _needs you_, when _you_ hit send, or at _session start_.
-- 📺 **Paste a YouTube link** — `/sounds add <url> airhorn` rips the audio into your library.
+- 📺 **Paste a YouTube link** — `/soundboard:sounds add <url> fahh` rips the audio into your library.
 - 🎵 **Sound library** — name sounds, assign them, or set a trigger to `random`.
 - 🪶 **Zero dependencies** — runs on the Node that already ships with Claude Code. Cross-platform.
 - 🤫 **Never blocks** — playback is fire-and-forget; it can't slow Claude down.
@@ -24,43 +24,50 @@ You ──prompt──▶ Claude ──reply──▶ 🔔  (plays ~25% of the t
 /plugin marketplace add fndrstudio/claude-soundboard
 
 # 2. Install the plugin
-/plugin install claude-soundboard@claude-soundboard
+/plugin install soundboard@claude-soundboard
 ```
 
 Restart Claude Code (or reload the window) so the hooks register. That's it — the next time Claude finishes a reply, you'll hear the built-in chime.
 
 > Prefer to try it locally first? Clone the repo and run `/plugin marketplace add /path/to/claude-soundboard`.
 
+**The command is `/soundboard:sounds`.** Plugin commands are always namespaced `/<plugin>:<command>`, so there is no bare `/sounds` — type `/sound` and let it autocomplete.
+
 ---
 
 ## Quick start
 
 ```bash
-/sounds                     # see what's on
-/sounds reply 25%           # chime after ~1 in 4 answers
-/sounds add https://youtu.be/dQw4w9WgXcQ airhorn   # import a sound
-/sounds reply airhorn       # use it for replies
-/sounds test                # hear the current reply sound
-/sounds off                 # mute everything
+/soundboard:sounds                   # see what's on
+/soundboard:sounds reply 25%         # chime after ~1 in 4 answers
+/soundboard:sounds add https://youtu.be/VIDEO_ID fahh 0:03-0:08   # import a clip
+/soundboard:sounds reply fahh        # use it for replies
+/soundboard:sounds test              # hear the current reply sound
+/soundboard:sounds off               # mute everything
 ```
 
 ---
 
-## The `/sounds` command
+## The `/soundboard:sounds` command
 
-| Command                                     | What it does                            |
-| ------------------------------------------- | --------------------------------------- |
-| `/sounds`                                   | Show current status                     |
-| `/sounds on` · `/sounds off`                | Master mute toggle                      |
-| `/sounds 25%`                               | Set the **reply** sound to a 25% chance |
-| `/sounds reply 50`                          | Set a trigger's probability             |
-| `/sounds reply on` · `/sounds waiting off`  | Enable/disable a trigger                |
-| `/sounds reply bonk`                        | Assign a library sound to a trigger     |
-| `/sounds reply random`                      | Pick a random library sound each time   |
-| `/sounds add <url> [name] [clip 0:03-0:08]` | Import audio from YouTube               |
-| `/sounds list`                              | Show your sound library                 |
-| `/sounds remove <name>`                     | Delete a custom sound                   |
-| `/sounds test [trigger\|name]`              | Play a sound right now                  |
+Every subcommand below is typed after `/soundboard:sounds`:
+
+| Subcommand                     | What it does                            |
+| ------------------------------ | --------------------------------------- |
+| _(nothing)_                    | Show current status                     |
+| `on` · `off`                   | Master mute toggle                      |
+| `25%`                          | Set the **reply** sound to a 25% chance |
+| `reply 50`                     | Set a trigger's probability             |
+| `reply on` · `waiting off`     | Enable/disable a trigger                |
+| `reply fahh`                   | Assign a library sound to a trigger     |
+| `reply random`                 | Pick a random library sound each time   |
+| `add <url> [name] [start-end]` | Import audio from YouTube               |
+| `rename <old> <new>`           | Rename a custom sound                   |
+| `remove <name>`                | Delete a custom sound                   |
+| `list`                         | Show your sound library                 |
+| `test [trigger\|name]`         | Play a sound right now                  |
+
+> **It runs the script, it doesn't ask Claude to improvise.** The command executes `soundboard.js` directly and applies your change deterministically — Claude only relays the result, it never hand-edits your config.
 
 ---
 
@@ -73,12 +80,12 @@ Restart Claude Code (or reload the window) so the hooks register. That's it — 
 | `prompt`  | You submit a message               | `UserPromptSubmit` | off          |
 | `session` | A session starts                   | `SessionStart`     | off          |
 
-Each has its own on/off switch, its own probability, and its own sound. Want a soft chime when an answer lands but an airhorn when Claude needs your attention? Easy:
+Each has its own on/off switch, its own probability, and its own sound. Want a soft chime when an answer lands but a FAHHH when Claude needs your attention? Easy:
 
 ```bash
-/sounds reply chime
-/sounds waiting on
-/sounds waiting airhorn
+/soundboard:sounds reply chime
+/soundboard:sounds waiting on
+/soundboard:sounds waiting fahh
 ```
 
 ---
@@ -86,12 +93,14 @@ Each has its own on/off switch, its own probability, and its own sound. Want a s
 ## Adding sounds from YouTube
 
 ```bash
-/sounds add https://www.youtube.com/watch?v=VIDEO_ID
-/sounds add https://youtu.be/VIDEO_ID airhorn
-/sounds add https://youtu.be/VIDEO_ID drumroll 0:02-0:05   # grab ONLY 0:02–0:05
+/soundboard:sounds add https://youtu.be/VIDEO_ID
+/soundboard:sounds add https://youtu.be/VIDEO_ID fahh
+/soundboard:sounds add https://youtu.be/VIDEO_ID drumroll 0:02-0:05   # grab ONLY 0:02–0:05
 ```
 
 **Most YouTube sounds are too long** — just append a `start-end` range and only that snippet is downloaded (handy for long intros, and yt-dlp pulls the raw stream so there are no ads either way). Times accept `SS`, `M:SS`, or `H:MM:SS`, e.g. `0:03-0:08`, `90-95`, `1:02:00-1:02:04`. The range is detected automatically, so the `clip` keyword is optional.
+
+> If your link contains an `&` (e.g. a playlist URL), wrap it in quotes: `add "https://…&list=…" fahh`. The short `youtu.be/ID` form never needs quoting.
 
 This feature shells out to [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) + `ffmpeg`. They're **only** needed for `add` — everything else works without them. If they're missing, the command tells you how to install them:
 
@@ -110,7 +119,7 @@ winget install yt-dlp.yt-dlp Gyan.FFmpeg
 
 ## Configuration
 
-Everything `/sounds` changes is stored in a plain JSON file you can also edit by hand:
+Everything the command changes is stored in a plain JSON file you can also edit by hand:
 
 | Platform      | Path                                      |
 | ------------- | ----------------------------------------- |
@@ -121,13 +130,13 @@ Everything `/sounds` changes is stored in a plain JSON file you can also edit by
 {
   "enabled": true,
   "triggers": {
-    "reply": { "enabled": true, "probability": 25, "sound": "airhorn" },
+    "reply": { "enabled": true, "probability": 25, "sound": "fahh" },
     "waiting": { "enabled": false, "probability": 100, "sound": "default" },
     "prompt": { "enabled": false, "probability": 100, "sound": "default" },
     "session": { "enabled": false, "probability": 100, "sound": "default" }
   },
   "library": {
-    "airhorn": "/Users/you/.config/claude-soundboard/sounds/airhorn.mp3"
+    "fahh": "/Users/you/.config/claude-soundboard/sounds/fahh.mp3"
   }
 }
 ```
@@ -140,6 +149,8 @@ Everything `/sounds` changes is stored in a plain JSON file you can also edit by
 
 A Claude Code [hook](https://code.claude.com/docs/en/hooks) on the `Stop` event runs `soundboard.js play reply` each time Claude finishes a turn. The script reads your config, rolls a die against the probability, and — if it wins — spawns your platform's audio player **detached** so the sound plays without the hook ever waiting. The `Notification`, `UserPromptSubmit`, and `SessionStart` hooks drive the other three triggers the same way.
 
+The `/soundboard:sounds` command is a thin wrapper that runs the same script with your arguments, so config changes are deterministic — not improvised by the model.
+
 Cross-platform playback uses `afplay` (macOS), `paplay`/`aplay`/`ffplay` (Linux), or PowerShell's `MediaPlayer` (Windows).
 
 ---
@@ -147,7 +158,7 @@ Cross-platform playback uses `afplay` (macOS), `paplay`/`aplay`/`ffplay` (Linux)
 ## Uninstall
 
 ```bash
-/plugin uninstall claude-soundboard@claude-soundboard
+/plugin uninstall soundboard@claude-soundboard
 ```
 
 To also remove your settings and imported sounds, delete the config folder above.

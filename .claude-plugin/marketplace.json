@@ -7,10 +7,10 @@
   },
   "plugins": [
     {
-      "name": "claude-soundboard",
+      "name": "soundboard",
       "source": "./",
       "description": "Play a sound when Claude replies — configurable probability, a sound library, and YouTube import.",
-      "version": "0.1.0"
+      "version": "0.2.0"
     }
   ]
 }
