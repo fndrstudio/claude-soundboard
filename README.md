@@ -1,18 +1,18 @@
-# 🔊 Claude Soundboard
+# 🔊 Claude FAHHH Replier
 
-A tiny, fun Claude Code plugin that **plays a sound when Claude replies** — but only as often as you want it to.
+**Claude Code goes FAHHH every time it replies.**
 
-Set it to fire on every answer, or 20% of the time for a random little dopamine hit. Build a library of sounds, assign different ones to different moments, or **add any sound by pasting a YouTube link**.
+That's it. That's the plugin. Install it and every answer Claude gives lands with a triumphant **FAHHH**. Too much? Dial it down to fire 1-in-4 replies. Want a different sound? Paste any YouTube link. But out of the box: pure, relentless FAHHH.
 
 ```
-You ──prompt──▶ Claude ──reply──▶ 🔔  (plays ~25% of the time, your call)
+You ──prompt──▶ Claude ──reply──▶ 🔊 FAHHH
 ```
 
-- 🎲 **Probability per event** — `100%` for always, `20%` for occasional, `0%` for never.
-- 🎚️ **Four triggers** — a sound when Claude _answers_, _needs you_, when _you_ hit send, or at _session start_.
-- 📺 **Paste a YouTube link** — `/soundboard:sounds add <url> fahh` rips the audio into your library.
-- 🎵 **Sound library** — name sounds, assign them, or set a trigger to `random`.
-- 🪶 **Zero dependencies** — runs on the Node that already ships with Claude Code. Cross-platform.
+- 🔊 **FAHHH by default** — no setup; the sound is fetched automatically on first run.
+- 🎲 **Dial the frequency** — every reply, or 25%, or off. Your eardrums, your call.
+- 🎚️ **More triggers** — also FAHHH when Claude needs you, when you hit send, or at session start.
+- 📺 **Bring your own** — swap the FAHHH for any YouTube clip (`add <url> 0:03-0:08`).
+- 🪶 **Zero dependencies** — runs on the Node that ships with Claude Code. Cross-platform.
 - 🤫 **Never blocks** — playback is fire-and-forget; it can't slow Claude down.
 
 ---
@@ -20,109 +20,87 @@ You ──prompt──▶ Claude ──reply──▶ 🔔  (plays ~25% of the t
 ## Install
 
 ```bash
-# 1. Add this repo as a plugin marketplace
-/plugin marketplace add fndrstudio/claude-soundboard
+# 1. Add the marketplace
+/plugin marketplace add fndrstudio/claude-fahhh
 
-# 2. Install the plugin
-/plugin install soundboard@claude-soundboard
+# 2. Install
+/plugin install soundboard@claude-fahhh
 ```
 
-Restart Claude Code (or reload the window) so the hooks register. That's it — the next time Claude finishes a reply, you'll hear the built-in chime.
+Restart Claude Code so the hooks register. On the first session the plugin quietly grabs the FAHHH (a 3-second clip) and from then on **every reply goes FAHHH**.
 
-> Prefer to try it locally first? Clone the repo and run `/plugin marketplace add /path/to/claude-soundboard`.
+> **First-run fetch needs [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) + `ffmpeg`** (the FAHHH lives on YouTube and is downloaded onto _your_ machine, never shipped in this repo). Until they're installed you'll hear a neutral chime instead. Get them with `brew install yt-dlp ffmpeg` (macOS), `sudo apt install ffmpeg && pipx install yt-dlp` (Linux), or `winget install yt-dlp.yt-dlp Gyan.FFmpeg` (Windows), then run `/soundboard:sounds fahhh`.
 
-**The command is `/soundboard:sounds`.** Plugin commands are always namespaced `/<plugin>:<command>`, so there is no bare `/sounds` — type `/sound` and let it autocomplete.
+The control command is **`/soundboard:sounds`** (plugin commands are namespaced `/<plugin>:<command>`).
 
 ---
 
-## Quick start
+## Make it bearable
 
 ```bash
-/soundboard:sounds                   # see what's on
-/soundboard:sounds reply 25%         # chime after ~1 in 4 answers
-/soundboard:sounds add https://youtu.be/VIDEO_ID fahh 0:03-0:08   # import a clip
-/soundboard:sounds reply fahh        # use it for replies
-/soundboard:sounds test              # hear the current reply sound
-/soundboard:sounds off               # mute everything
+/soundboard:sounds reply 25%     # FAHHH on ~1 of every 4 replies
+/soundboard:sounds off           # mute everything
+/soundboard:sounds on            # bring it back
+/soundboard:sounds               # show current status
 ```
-
----
 
 ## The `/soundboard:sounds` command
 
-Every subcommand below is typed after `/soundboard:sounds`:
+Every subcommand is typed after `/soundboard:sounds`:
 
-| Subcommand                     | What it does                            |
-| ------------------------------ | --------------------------------------- |
-| _(nothing)_                    | Show current status                     |
-| `on` · `off`                   | Master mute toggle                      |
-| `25%`                          | Set the **reply** sound to a 25% chance |
-| `reply 50`                     | Set a trigger's probability             |
-| `reply on` · `waiting off`     | Enable/disable a trigger                |
-| `reply fahh`                   | Assign a library sound to a trigger     |
-| `reply random`                 | Pick a random library sound each time   |
-| `add <url> [name] [start-end]` | Import audio from YouTube               |
-| `fade <name> [seconds]`        | Smooth a sound's ending (default 0.3s)  |
-| `rename <old> <new>`           | Rename a custom sound                   |
-| `remove <name>`                | Delete a custom sound                   |
-| `list`                         | Show your sound library                 |
-| `test [trigger\|name]`         | Play a sound right now                  |
+| Subcommand                     | What it does                              |
+| ------------------------------ | ----------------------------------------- |
+| _(nothing)_                    | Show current status                       |
+| `on` · `off`                   | Master mute toggle                        |
+| `25%`                          | Set the **reply** sound to a 25% chance   |
+| `fahhh`                        | (Re)fetch the FAHHH and set it on replies |
+| `reply 50`                     | Set a trigger's probability               |
+| `reply on` · `waiting off`     | Enable/disable a trigger                  |
+| `reply <name>`                 | Assign a library sound to a trigger       |
+| `reply random`                 | Pick a random library sound each time     |
+| `add <url> [name] [start-end]` | Import another sound from YouTube         |
+| `fade <name> [seconds]`        | Smooth a sound's ending (default 0.3s)    |
+| `rename <old> <new>`           | Rename a custom sound                     |
+| `remove <name>`                | Delete a custom sound                     |
+| `list`                         | Show your sound library                   |
+| `test [trigger\|name]`         | Play a sound right now                    |
 
-> **It runs the script, it doesn't ask Claude to improvise.** The command executes `soundboard.js` directly and applies your change deterministically — Claude only relays the result, it never hand-edits your config.
+> The command runs `soundboard.js` directly and applies your change deterministically — Claude only relays the result, it never hand-edits your config.
 
 ---
 
 ## The four triggers
 
-| Trigger   | Fires when…                        | Hook               | Default      |
-| --------- | ---------------------------------- | ------------------ | ------------ |
-| `reply`   | Claude finishes an answer          | `Stop`             | **on, 100%** |
-| `waiting` | Claude needs you / asks permission | `Notification`     | off          |
-| `prompt`  | You submit a message               | `UserPromptSubmit` | off          |
-| `session` | A session starts                   | `SessionStart`     | off          |
+| Trigger   | Fires when…                        | Hook               | Default         |
+| --------- | ---------------------------------- | ------------------ | --------------- |
+| `reply`   | Claude finishes an answer          | `Stop`             | **FAHHH, 100%** |
+| `waiting` | Claude needs you / asks permission | `Notification`     | off             |
+| `prompt`  | You submit a message               | `UserPromptSubmit` | off             |
+| `session` | A session starts                   | `SessionStart`     | off             |
 
-Each has its own on/off switch, its own probability, and its own sound. Want a soft chime when an answer lands but a FAHHH when Claude needs your attention? Easy:
-
-```bash
-/soundboard:sounds reply chime
-/soundboard:sounds waiting on
-/soundboard:sounds waiting fahh
-```
+Each has its own on/off switch, probability, and sound — so you can FAHHH on replies but use something gentler when Claude needs your attention.
 
 ---
 
-## Adding sounds from YouTube
+## Bring your own sound
+
+Don't want the FAHHH? Replace it with anything on YouTube:
 
 ```bash
-/soundboard:sounds add https://youtu.be/VIDEO_ID
-/soundboard:sounds add https://youtu.be/VIDEO_ID fahh
+/soundboard:sounds add https://youtu.be/VIDEO_ID airhorn
 /soundboard:sounds add https://youtu.be/VIDEO_ID drumroll 0:02-0:05   # grab ONLY 0:02–0:05
+/soundboard:sounds reply airhorn
 ```
 
-**Most YouTube sounds are too long** — just append a `start-end` range and only that snippet is downloaded (handy for long intros, and yt-dlp pulls the raw stream so there are no ads either way). Times accept `SS`, `M:SS`, or `H:MM:SS`, e.g. `0:03-0:08`, `90-95`, `1:02:00-1:02:04`. The range is detected automatically, so the `clip` keyword is optional.
+**Most clips are too long** — append a `start-end` range and only that snippet downloads (and yt-dlp pulls the raw stream, so no ads). Times accept `SS`, `M:SS`, or `H:MM:SS`. Imported sounds get a **0.3s fade-out** automatically so they don't cut off abruptly (`fade <sec>` to adjust, `nofade` to skip; `fade <name>` to smooth one you already have).
 
-> If your link contains an `&` (e.g. a playlist URL), wrap it in quotes: `add "https://…&list=…" fahh`. The short `youtu.be/ID` form never needs quoting.
-
-**Imported sounds get a 0.3s fade-out automatically** so clipped audio doesn't cut off abruptly (plus a tiny fade-in to kill the opening click). Tune it inline — `add <url> fahh 0:03-0:08 fade 0.6` — or skip it with `nofade`. To smooth a sound you already have: `fade fahh` (or `fade fahh 0.5`).
-
-This feature shells out to [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) + `ffmpeg`. They're **only** needed for `add` — everything else works without them. If they're missing, the command tells you how to install them:
-
-```bash
-# macOS
-brew install yt-dlp ffmpeg
-# Linux
-sudo apt install ffmpeg && pipx install yt-dlp
-# Windows
-winget install yt-dlp.yt-dlp Gyan.FFmpeg
-```
-
-> Only add audio you have the right to use. Downloaded clips are stored locally and never uploaded anywhere.
+> If a link contains an `&`, wrap it in quotes. The short `youtu.be/ID` form never needs it.
 
 ---
 
 ## Configuration
 
-Everything the command changes is stored in a plain JSON file you can also edit by hand:
+Everything is stored in a plain JSON file you can also edit by hand:
 
 | Platform      | Path                                      |
 | ------------- | ----------------------------------------- |
@@ -133,26 +111,24 @@ Everything the command changes is stored in a plain JSON file you can also edit 
 {
   "enabled": true,
   "triggers": {
-    "reply": { "enabled": true, "probability": 25, "sound": "fahh" },
+    "reply": { "enabled": true, "probability": 100, "sound": "fahhh" },
     "waiting": { "enabled": false, "probability": 100, "sound": "default" },
     "prompt": { "enabled": false, "probability": 100, "sound": "default" },
     "session": { "enabled": false, "probability": 100, "sound": "default" }
   },
   "library": {
-    "fahh": "/Users/you/.config/claude-soundboard/sounds/fahh.mp3"
+    "fahhh": "/Users/you/.config/claude-soundboard/sounds/fahhh.mp3"
   }
 }
 ```
 
-`sound` can be `"default"` (the bundled chime), `"random"` (any library sound), a library name, or an absolute path to your own file. Imported sounds live in `…/claude-soundboard/sounds/`.
+`sound` can be `"default"` (the bundled fallback chime), `"random"`, a library name, or an absolute path. Fetched/imported sounds live in `…/claude-soundboard/sounds/`.
 
 ---
 
 ## How it works
 
-A Claude Code [hook](https://code.claude.com/docs/en/hooks) on the `Stop` event runs `soundboard.js play reply` each time Claude finishes a turn. The script reads your config, rolls a die against the probability, and — if it wins — spawns your platform's audio player **detached** so the sound plays without the hook ever waiting. The `Notification`, `UserPromptSubmit`, and `SessionStart` hooks drive the other three triggers the same way.
-
-The `/soundboard:sounds` command is a thin wrapper that runs the same script with your arguments, so config changes are deterministic — not improvised by the model.
+A Claude Code [hook](https://code.claude.com/docs/en/hooks) on the `Stop` event runs `soundboard.js play reply` each time Claude finishes a turn. The script reads your config, rolls a die against the probability, and — if it wins — spawns your platform's audio player **detached** so the FAHHH plays without the hook ever waiting. On a fresh install the first hook also kicks off a one-time background fetch of the FAHHH. The other three triggers work the same way.
 
 Cross-platform playback uses `afplay` (macOS), `paplay`/`aplay`/`ffplay` (Linux), or PowerShell's `MediaPlayer` (Windows).
 
@@ -161,17 +137,17 @@ Cross-platform playback uses `afplay` (macOS), `paplay`/`aplay`/`ffplay` (Linux)
 ## Uninstall
 
 ```bash
-/plugin uninstall soundboard@claude-soundboard
+/plugin uninstall soundboard@claude-fahhh
 ```
 
-To also remove your settings and imported sounds, delete the config folder above.
+To also remove your settings and downloaded sounds, delete the config folder above.
 
 ---
 
 ## Contributing
 
-PRs welcome — new bundled sounds, better Windows playback, more triggers. Keep the core dependency-free (Node built-ins only). The whole plugin is one small `soundboard.js`.
+PRs welcome — better Windows playback, more triggers, more ways to FAHHH. Keep the core dependency-free (Node built-ins only). The whole plugin is one small `soundboard.js`.
 
 ## License
 
-[MIT](LICENSE) © FNDR Studio. The bundled `chime.wav` is an original synthesized tone, free to use.
+[MIT](LICENSE) © FNDR Studio. The bundled `chime.wav` fallback is an original synthesized tone, free to use. The FAHHH is downloaded from YouTube to your machine and is **not** distributed with this repo.

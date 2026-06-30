@@ -1,6 +1,6 @@
 {
-  "name": "claude-soundboard",
-  "description": "Sound effects for Claude Code — play a sound when Claude replies, with configurable probability and YouTube import.",
+  "name": "claude-fahhh",
+  "description": "The Claude FAHHH Replier — Claude Code goes FAHHH every time it replies.",
   "owner": {
     "name": "FNDR Studio",
     "url": "https://github.com/fndrstudio"
@@ -9,8 +9,8 @@
     {
       "name": "soundboard",
       "source": "./",
-      "description": "Play a sound when Claude replies — configurable probability, a sound library, and YouTube import.",
-      "version": "0.3.0"
+      "description": "Goes FAHHH every time Claude replies. Configurable frequency, fetched on first run, swap in any YouTube clip.",
+      "version": "1.0.0"
     }
   ]
 }

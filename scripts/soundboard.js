@@ -20,7 +20,17 @@ const CMD = "/soundboard:sounds";
 
 const PLUGIN_ROOT =
   process.env.CLAUDE_PLUGIN_ROOT || path.resolve(__dirname, "..");
-const BUILTIN_SOUND = path.join(PLUGIN_ROOT, "sounds", "chime.wav");
+const SOUNDS_DIR = path.join(PLUGIN_ROOT, "sounds");
+
+// Only the original chime ships as bytes (CC0). The signature FAHHH is fetched
+// on first run from YouTube onto the user's machine — never redistributed here.
+const BUILTINS = { default: "chime.wav" };
+const builtinPath = (name) => path.join(SOUNDS_DIR, BUILTINS[name]);
+const BUILTIN_SOUND = builtinPath("default");
+
+// The FAHHH. This plugin's whole reason for existing.
+const FAHHH_URL = "https://www.youtube.com/watch?v=-vH2b55TSHI";
+const FAHHH_CLIP = "0:00-0:03";
 
 function configDir() {
   if (process.platform === "win32") {
@@ -34,14 +44,13 @@ const CONFIG_FILE = path.join(configDir(), "config.json");
 const USER_SOUNDS = path.join(configDir(), "sounds");
 
 function defaults() {
-  const mk = (enabled) => ({ enabled, probability: 100, sound: "default" });
   return {
     enabled: true,
     triggers: {
-      reply: mk(true),
-      waiting: mk(false),
-      prompt: mk(false),
-      session: mk(false),
+      reply: { enabled: true, probability: 100, sound: "fahhh" },
+      waiting: { enabled: false, probability: 100, sound: "default" },
+      prompt: { enabled: false, probability: 100, sound: "default" },
+      session: { enabled: false, probability: 100, sound: "default" },
     },
     library: {},
   };
@@ -86,10 +95,11 @@ function hasCmd(c) {
 
 function resolveSound(cfg, sound) {
   if (!sound || sound === "default") return BUILTIN_SOUND;
+  if (BUILTINS[sound]) return builtinPath(sound);
   if (sound === "random") {
-    const keys = Object.keys(cfg.library);
-    if (!keys.length) return BUILTIN_SOUND;
-    return cfg.library[keys[Math.floor(Math.random() * keys.length)]];
+    const pool = [...new Set([...Object.keys(cfg.library), "fahh", "cars"])];
+    if (!pool.length) return BUILTIN_SOUND;
+    return resolveSound(cfg, pool[Math.floor(Math.random() * pool.length)]);
   }
   if (cfg.library[sound]) return cfg.library[sound];
   const asPath = expandHome(sound);
@@ -129,10 +139,80 @@ function play(file) {
   }
 }
 
+// Downloads the FAHHH (or any URL) into the library. Used by the manual
+// command and the first-run bootstrap.
+function fetchFahhh(quiet) {
+  if (!hasCmd("yt-dlp") || !hasCmd("ffmpeg")) {
+    if (!quiet) {
+      console.log(
+        "⚠️  The FAHHH lives on YouTube — fetching it needs yt-dlp + ffmpeg:\n" +
+          "   macOS:   brew install yt-dlp ffmpeg\n" +
+          "   Linux:   sudo apt install ffmpeg && pipx install yt-dlp\n" +
+          "   Windows: winget install yt-dlp.yt-dlp Gyan.FFmpeg\n" +
+          "Until then you'll hear the fallback chime.",
+      );
+    }
+    return false;
+  }
+  ensureDir(USER_SOUNDS);
+  const dest = path.join(USER_SOUNDS, "fahhh.mp3");
+  const r = spawnSync(
+    "yt-dlp",
+    [
+      "-x",
+      "--audio-format",
+      "mp3",
+      "--audio-quality",
+      "0",
+      "--no-playlist",
+      "--download-sections",
+      `*${FAHHH_CLIP}`,
+      "--force-keyframes-at-cuts",
+      "-o",
+      path.join(USER_SOUNDS, "fahhh.%(ext)s"),
+      FAHHH_URL,
+    ],
+    { encoding: "utf8" },
+  );
+  if (r.status !== 0 || !fs.existsSync(dest)) {
+    if (!quiet) console.log("❌ Couldn't fetch the FAHHH. Try again later.");
+    return false;
+  }
+  applyFade(dest, 0.3);
+  const cfg = loadConfig();
+  cfg.library.fahhh = dest;
+  cfg._setup = true;
+  cfg.triggers.reply.sound = "fahhh";
+  cfg.triggers.reply.enabled = true;
+  saveConfig(cfg);
+  if (!quiet)
+    console.log(
+      `✅ Got the FAHHH. Every reply now goes FAHHH. Calm it with ${CMD} reply 25%.`,
+    );
+  return true;
+}
+
+// On a fresh install, grab the FAHHH once in the background so the very first
+// session becomes a FAHHH replier without any manual step.
+function maybeBootstrap(cfg) {
+  try {
+    if (cfg._setup || Object.keys(cfg.library).length) return;
+    if (fs.existsSync(path.join(USER_SOUNDS, "fahhh.mp3"))) return;
+    if (!hasCmd("yt-dlp") || !hasCmd("ffmpeg")) return;
+    cfg._setup = true;
+    saveConfig(cfg);
+    spawn(process.execPath, [__filename, "fetch-fahhh"], {
+      detached: true,
+      stdio: "ignore",
+    }).unref();
+  } catch (_) {}
+}
+
 // --- hook path: silent, fast, gated by probability ---
 function hookPlay(trigger) {
   try {
     const cfg = loadConfig();
+    maybeBootstrap(cfg);
     if (!cfg.enabled) return;
     const t = cfg.triggers[trigger];
     if (!t || !t.enabled) return;
@@ -151,7 +231,7 @@ function printStatus() {
   }
   out += `\n   reply   = after Claude answers      prompt  = when you hit send`;
   out += `\n   waiting = when Claude needs you      session = at session start\n`;
-  out += `\nControl with ${CMD} — e.g.  reply 25%  ·  add <url> fahh 0:03-0:08  ·  test  ·  off`;
+  out += `\nControl with ${CMD} — e.g.  reply 25%  ·  fahhh  ·  add <url> airhorn 0:03-0:08  ·  off`;
   console.log(out);
 }
 
@@ -196,6 +276,7 @@ function configTrigger(name, rest) {
       const valid =
         tok === "default" ||
         tok === "random" ||
+        BUILTINS[tok] ||
         cfg.library[tok] ||
         fs.existsSync(expandHome(tok));
       if (!valid) {
@@ -223,8 +304,9 @@ function test(arg) {
 
 function list() {
   const cfg = loadConfig();
-  const names = Object.keys(cfg.library);
-  let out = "🎵 Sound library:\n   default   (built-in chime)\n";
+  const names = Object.keys(cfg.library).filter((n) => !BUILTINS[n]);
+  let out = "🎵 Sound library:\n";
+  out += "   default   (built-in chime, the fallback)\n";
   out += names.length
     ? names.map((n) => `   ${n}`).join("\n") + "\n"
     : `   (no custom sounds yet — add one with ${CMD} add <youtube-url> [name])\n`;
@@ -444,8 +526,9 @@ Usage:  ${CMD} <command>
   <trigger> <value>              configure a trigger
        trigger: reply | waiting | prompt | session
        value:   on | off | <number>% | <sound-name>
-       e.g.  reply 50     waiting on     reply fahh     reply random
-  add <url> [name] [start-end]   import a sound from YouTube (e.g. add <url> fahh 0:03-0:08)
+       e.g.  reply 50     waiting on     reply fahhh    reply random
+  fahhh                          (re)fetch the FAHHH and set it as the reply sound
+  add <url> [name] [start-end]   import another sound from YouTube (e.g. add <url> airhorn 0:03-0:08)
        …add a fade with  fade <sec>  or turn it off with  nofade
   fade <name> [seconds]          smooth an existing sound's ending (default 0.3s)
   rename <old> <new>             rename a custom sound
@@ -485,6 +568,11 @@ function main() {
     case "test":
     case "play-now":
       return test(argv[1]);
+    case "fahhh":
+    case "fahh":
+      return fetchFahhh(false);
+    case "fetch-fahhh":
+      return fetchFahhh(true);
     case "add":
       return add(argv.slice(1));
     case "fade":

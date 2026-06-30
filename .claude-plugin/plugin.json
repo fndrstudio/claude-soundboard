@@ -1,14 +1,14 @@
 {
   "name": "soundboard",
-  "displayName": "Claude Soundboard",
-  "version": "0.3.0",
-  "description": "Play a sound when Claude replies — with per-event probability, a sound library, and paste-a-YouTube-link import.",
+  "displayName": "Claude FAHHH Replier",
+  "version": "1.0.0",
+  "description": "Goes FAHHH every time Claude replies. Fetches the sound on first run; dial the frequency, or swap in any YouTube clip.",
   "author": {
     "name": "FNDR Studio",
     "url": "https://github.com/fndrstudio"
   },
-  "homepage": "https://github.com/fndrstudio/claude-soundboard",
-  "repository": "https://github.com/fndrstudio/claude-soundboard",
+  "homepage": "https://github.com/fndrstudio/claude-fahhh",
+  "repository": "https://github.com/fndrstudio/claude-fahhh",
   "license": "MIT",
-  "keywords": ["sound", "audio", "notifications", "hooks", "fun"]
+  "keywords": ["fahhh", "sound", "audio", "meme", "hooks", "fun"]
 }
